@@ -1,0 +1,126 @@
+repeat task.wait() until game:IsLoaded()
+
+loadstring(game:HttpGet("https://pastebin.com/raw/Dffn96Gz"))()
+
+local TweenService = game:GetService("TweenService")
+
+--prepare the script
+local flyspeed = getgenv().FlySpeed
+
+function shop(min, max)
+    local goofyahhvalue = math.random(min, max)
+    local Player = game.Players.LocalPlayer    
+    local Http = game:GetService("HttpService")
+    local TPS = game:GetService("TeleportService")
+    local Api = "https://games.roblox.com/v1/games/"
+
+    local _place, _id = game.PlaceId, game.JobId
+    local _servers = Api.._place.."/servers/Public?sortOrder=Desc&limit=100"
+    function ListServers(cursor)
+        local Raw = game:HttpGet(_servers .. ((cursor and "&cursor="..cursor) or ""))
+        return Http:JSONDecode(Raw)
+    end
+
+    local Next; 
+    repeat
+        task.wait()
+        local Servers = ListServers(Next)
+        for i, v in next, Servers.data do
+            if v.playing < goofyahhvalue and v.id ~= _id then
+                local s,r = pcall(TPS.TeleportToPlaceInstance,TPS,_place,v.id,Player)
+                if s then task.wait(5) break end
+            end
+        end
+        Next = Servers.nextPageCursor
+    until not Next
+end
+
+getgenv().shop = shop
+
+workspace:WaitForChild("Ignore")
+workspace:WaitForChild("ComputerStore"):WaitForChild("Lasers"):Destroy()
+workspace:WaitForChild("JewelryStore"):WaitForChild("Jewlery"):WaitForChild("Lasers"):Destroy()
+task.wait(0.5)
+for i, v in next, workspace.Ignore.WorldObjects:GetChildren() do
+    if v.Name == "Lasers" then
+        v:Destroy()
+    end
+end
+
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteFunction"):InvokeServer("SetTeam", getgenv().Team)
+
+task.spawn(function()
+    task.wait(40)
+    shop(getgenv().ServerHop.min, getgenv().ServerHop.max)
+end)
+
+task.wait(getgenv().TimeToLoad)
+--prepare the script
+
+local char = workspace:WaitForChild(game:GetService("Players").LocalPlayer.Name)
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+function tweenTp(x, y, z, speed)
+    local pos = Vector3.new(x, y, z)
+    
+    local distance = (hrp.Position - pos).Magnitude
+    
+    local info = TweenInfo.new(distance / speed) -- how long the tween will play for
+    
+    local Animation = TweenService:Create(hrp, info, {Position = pos})
+    Animation:Play()
+end
+
+local MiniRobberies = {
+    "Cash",
+    "CashRegister",
+    "DiamondBox",
+    "Laptop",
+    "Phone",
+    "Luggage",
+    "ATM",
+    "TV",
+    "Safe"
+}
+
+local function get_all_small_robberies()
+    local robberies = {}
+    for i, v in next, workspace.ObjectSelection:GetChildren() do
+        if not table.find(MiniRobberies, v.Name) then continue end
+        if v:FindFirstChild("Nope") then continue end
+        
+        local function get_model_pos(model)
+            return model:GetPivot().Position
+        end
+        
+        table.insert(robberies, {v, get_model_pos(v)})
+    end
+    return robberies
+end
+
+local function get_event(v)
+    for i, v in next, v:GetDescendants() do
+        if not v:IsA("RemoteEvent") then continue end
+        return v
+    end
+end
+
+local all_robberies = get_all_small_robberies()
+
+for _, robbery in ipairs(all_robberies) do
+    local robbery_pos = robbery[2]
+    local event = get_event(robbery[1])
+
+    -- Teleportiere zu jedem Raub
+    tweenTp(robbery_pos.x, robbery_pos.y, robbery_pos.z, flyspeed)
+
+    -- Führe den Raub aus
+    event:FireServer()
+
+    -- Warte kurz vor dem nächsten Raub
+    task.wait(0.05)
+end
+
+task.wait(0.2)
+
+shop(getgenv().ServerHop.min, getgenv().ServerHop.max)
