@@ -4,7 +4,7 @@ loadstring(game:HttpGet("https://pastebin.com/raw/Dffn96Gz"))()
 
 local TweenService = game:GetService("TweenService")
 
---prepare the script
+-- prepare the script
 local flyspeed = getgenv().FlySpeed
 
 function shop(min, max)
@@ -55,22 +55,12 @@ task.spawn(function()
 end)
 
 task.wait(getgenv().TimeToLoad)
---prepare the script
+-- prepare the script
 
 local char = workspace:WaitForChild(game:GetService("Players").LocalPlayer.Name)
 local hrp = char:WaitForChild("HumanoidRootPart")
 
-function tweenTp(x, y, z, speed)
-    local pos = Vector3.new(x, y, z)
-    
-    local distance = (hrp.Position - pos).Magnitude
-    
-    local info = TweenInfo.new(distance / speed) -- how long the tween will play for
-    
-    local Animation = TweenService:Create(hrp, info, {Position = pos})
-    Animation:Play()
-end
-
+-- Funktion, um alle Mini-Raube zu sammeln
 local MiniRobberies = {
     "Cash",
     "CashRegister",
@@ -89,36 +79,30 @@ local function get_all_small_robberies()
         if not table.find(MiniRobberies, v.Name) then continue end
         if v:FindFirstChild("Nope") then continue end
         
-        local function get_model_pos(model)
-            return model:GetPivot().Position
-        end
-        
-        table.insert(robberies, {v, get_model_pos(v)})
+        table.insert(robberies, v)
     end
     return robberies
 end
 
 local function get_event(v)
     for i, v in next, v:GetDescendants() do
-        if not v:IsA("RemoteEvent") then continue end
-        return v
+        if v:IsA("RemoteEvent") then
+            return v
+        end
     end
 end
 
+-- Alle Raubobjekte finden
 local all_robberies = get_all_small_robberies()
 
+-- Führe alle Raube auf einmal durch, ohne zu teleportieren
 for _, robbery in ipairs(all_robberies) do
-    local robbery_pos = robbery[2]
-    local event = get_event(robbery[1])
+    local event = get_event(robbery)
 
-    -- Teleportiere zu jedem Raub
-    tweenTp(robbery_pos.x, robbery_pos.y, robbery_pos.z, flyspeed)
-
-    -- Führe den Raub aus
-    event:FireServer()
-
-    -- Warte kurz vor dem nächsten Raub
-    task.wait(0.05)
+    -- Falls ein Event gefunden wird, wird es gefeuert
+    if event then
+        event:FireServer()
+    end
 end
 
 task.wait(0.2)
